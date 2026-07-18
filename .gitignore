@@ -1,0 +1,6 @@
+node_modules/
+dist/
+backend/skyloure.db
+backend/uploads/
+.env
+*.log
