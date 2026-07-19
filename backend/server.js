@@ -4,6 +4,7 @@ import session from 'express-session';
 import passport from 'passport';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 import authRouter from './routes/auth.js';
 import localAuthRouter from './routes/local-auth.js';
 import uploadRouter from './routes/upload.js';
@@ -19,9 +20,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const corsOrigin = process.env.FRONTEND_URL || true;
 app.use(cors({
-  origin: corsOrigin,
+  origin: process.env.FRONTEND_URL || true,
   credentials: true,
 }));
 app.use(express.json());
@@ -37,9 +37,10 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
+
 const uploadsPath = join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsPath)) fs.mkdirSync(uploadsPath, { recursive: true });
 app.use('/uploads', express.static(uploadsPath));
-console.log('Serving uploads from:', uploadsPath);
 
 app.use('/api/auth', authRouter);
 app.use('/api/auth', localAuthRouter);
@@ -58,10 +59,18 @@ app.get('/api/admin/check', (req, res) => {
 });
 
 const frontendDist = join(__dirname, '..', 'frontend', 'dist');
+console.log('Serving static files from:', frontendDist);
+if (!fs.existsSync(frontendDist)) {
+  console.error('ERROR: Frontend dist not found at', frontendDist);
+}
 app.use(express.static(frontendDist));
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not found' });
-  res.sendFile(join(frontendDist, 'index.html'));
+  const indexPath = join(frontendDist, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return res.status(500).send('Frontend not built. Run: npm run build');
+  }
+  res.sendFile(indexPath);
 });
 
 app.listen(PORT, () => {
