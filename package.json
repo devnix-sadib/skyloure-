@@ -2,14 +2,14 @@
   "name": "skyloure",
   "private": true,
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.5.0"
   },
   "scripts": {
     "install:all": "cd backend && npm install && cd ../frontend && npm install",
     "postinstall": "cd backend && npm install && cd ../frontend && npm install",
     "seed": "cd backend && node seed.js",
     "build": "cd frontend && npm run build",
-    "start": "cd backend && node server.js",
+    "start": "node backend/server.js",
     "dev:backend": "cd backend && node server.js",
     "dev:frontend": "cd frontend && npx vite",
     "dev": "start cmd /c \"cd backend && node server.js\" && start cmd /c \"cd frontend && npx vite\""
