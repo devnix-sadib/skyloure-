@@ -2,8 +2,14 @@ import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db, { beginTransaction, commitTransaction, rollbackTransaction } from '../db.js';
 import { isAuthenticated, isAdmin } from '../middleware/auth.js';
+import { sendOrderConfirmation } from '../email.js';
 
 const router = Router();
+
+function getShippingFee() {
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'shipping_fee'").get();
+  return row ? parseFloat(row.value) || 120 : 120;
+}
 
 router.get('/', isAuthenticated, (req, res) => {
   let orders;
@@ -37,17 +43,19 @@ router.post('/', isAuthenticated, (req, res) => {
 
   if (cartItems.length === 0) return res.status(400).json({ error: 'Cart is empty' });
 
+  const shippingFee = getShippingFee();
   const getPrice = (item) => (item.offer_price && item.offer_price > 0 && item.offer_price < item.price ? item.offer_price : item.price);
-  const total = cartItems.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
+  const subtotal = cartItems.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
+  const total = subtotal + (cartItems.length > 0 ? shippingFee : 0);
   const orderId = uuidv4();
 
-  const insertOrder = db.prepare('INSERT INTO orders (id, user_id, total, status, buyer_name, mobile, address, phone, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const insertOrder = db.prepare('INSERT INTO orders (id, user_id, total, shipping_fee, status, buyer_name, mobile, address, phone, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
   const insertItem = db.prepare('INSERT INTO order_items (id, order_id, product_id, product_name, price, quantity, image, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
   const clearCart = db.prepare('DELETE FROM cart WHERE user_id = ?');
 
   beginTransaction();
   try {
-    insertOrder.run(orderId, req.user.id, total, 'pending', buyer_name, mobile, address, phone || mobile, notes || null);
+    insertOrder.run(orderId, req.user.id, total, shippingFee, 'pending', buyer_name, mobile, address, phone || mobile, notes || null);
     for (const item of cartItems) {
       insertItem.run(uuidv4(), orderId, item.id, item.name, getPrice(item), item.quantity, item.image, item.color || '');
     }
@@ -58,7 +66,17 @@ router.post('/', isAuthenticated, (req, res) => {
     throw e;
   }
 
-  res.json({ id: orderId, total, status: 'pending' });
+  sendOrderConfirmation({
+    to: req.user.email,
+    name: buyer_name,
+    orderId,
+    total,
+    subtotal,
+    shippingFee,
+    items: cartItems.map(i => ({ product_name: i.name, price: getPrice(i), quantity: i.quantity })),
+  });
+
+  res.json({ id: orderId, total, shipping_fee: shippingFee, status: 'pending' });
 });
 
 router.delete('/:id', isAdmin, (req, res) => {

@@ -13,6 +13,7 @@ import cartRouter from './routes/cart.js';
 import favoritesRouter from './routes/favorites.js';
 import ordersRouter from './routes/orders.js';
 import contactRouter from './routes/contact.js';
+import settingsRouter from './routes/settings.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -44,6 +45,7 @@ app.use('/api/cart', cartRouter);
 app.use('/api/favorites', favoritesRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/contact', contactRouter);
+app.use('/api/settings', settingsRouter);
 
 app.get('/api/admin/check', (req, res) => {
   if (req.isAuthenticated() && req.user.role === 'admin') return res.json({ admin: true });

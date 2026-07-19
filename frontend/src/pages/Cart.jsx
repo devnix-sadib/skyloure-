@@ -4,12 +4,15 @@ import { api } from '../api';
 import { useAuth } from '../store';
 import { getColorHex, isLightColor } from '../utils/colorMap';
 
+const CURRENCY = '৳';
+
 export default function Cart() {
   const { user, refreshCartCount } = useAuth();
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [checkout, setCheckout] = useState(false);
+  const [shippingFee, setShippingFee] = useState(120);
   const [buyerName, setBuyerName] = useState('');
   const [mobile, setMobile] = useState('');
   const [address, setAddress] = useState('');
@@ -20,6 +23,7 @@ export default function Cart() {
   useEffect(() => {
     if (!user) return setLoading(false);
     api.getCart().then(data => { setItems(data); setLoading(false); }).catch(() => setLoading(false));
+    api.getSettings().then(s => { if (s.shipping_fee) setShippingFee(parseFloat(s.shipping_fee)); }).catch(() => {});
   }, [user]);
 
   if (!user) {
@@ -36,7 +40,8 @@ export default function Cart() {
   }
 
   const getPrice = (item) => (item.offer_price && item.offer_price > 0 && item.offer_price < item.price ? item.offer_price : item.price);
-  const total = items.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
+  const total = subtotal + (subtotal > 0 ? shippingFee : 0);
 
   const updateQty = async (cartId, qty) => {
     await api.updateCart(cartId, qty);
@@ -80,6 +85,26 @@ export default function Cart() {
       ) : checkout ? (
         <div className="max-w-lg mx-auto">
           <h2 className="font-serif text-xl mb-6">Checkout</h2>
+
+          {/* Order Summary */}
+          <div className="bg-gray-50 rounded-2xl p-5 mb-6 border border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Order Summary</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between text-gray-500">
+                <span>Subtotal ({items.length} items)</span>
+                <span>{CURRENCY}{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-gray-500">
+                <span>Delivery Fee</span>
+                <span>{CURRENCY}{shippingFee}.00</span>
+              </div>
+              <div className="border-t border-gray-200 pt-2 flex justify-between font-semibold text-gray-800 text-base">
+                <span>Total</span>
+                <span className="text-rose-600">{CURRENCY}{total.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -88,7 +113,7 @@ export default function Cart() {
               </div>
               <div>
                 <label className="block text-sm text-gray-600 mb-1">Mobile Number *</label>
-                <input className="input-field" type="tel" placeholder="+1 234 567 890" value={mobile} onChange={e => setMobile(e.target.value)} />
+                <input className="input-field" type="tel" placeholder="01X XXXX XXXX" value={mobile} onChange={e => setMobile(e.target.value)} />
               </div>
             </div>
             <div>
@@ -99,17 +124,20 @@ export default function Cart() {
               <label className="block text-sm text-gray-600 mb-1">Order Notes (optional)</label>
               <textarea className="input-field" rows={3} placeholder="Any special requests..." value={notes} onChange={e => setNotes(e.target.value)} />
             </div>
-            <div className="border-t border-gray-100 pt-4 mt-6">
-              <div className="flex justify-between text-lg font-medium mb-4">
-                <span>Total</span>
-                <span className="text-rose-600">${total.toFixed(2)}</span>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setCheckout(false)} className="btn-outline flex-1">Back</button>
-                <button onClick={placeOrder} disabled={ordering || !buyerName || !mobile || !address} className="btn-primary flex-1 disabled:opacity-50">
-                  {ordering ? 'Placing Order...' : 'Place Order'}
-                </button>
-              </div>
+
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setCheckout(false)} className="btn-outline flex-1">Back</button>
+              <button onClick={placeOrder} disabled={ordering || !buyerName || !mobile || !address} className="btn-primary flex-1 disabled:opacity-50">
+                {ordering ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Placing Order...
+                  </span>
+                ) : 'Place Order'}
+              </button>
             </div>
           </div>
         </div>
@@ -139,11 +167,11 @@ export default function Cart() {
                   )}
                   {item.offer_price && item.offer_price > 0 && item.offer_price < item.price ? (
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-rose-600 font-medium">${item.offer_price.toFixed(2)}</p>
-                      <p className="text-gray-400 text-xs line-through">${item.price.toFixed(2)}</p>
+                      <p className="text-rose-600 font-medium">{CURRENCY}{item.offer_price.toFixed(2)}</p>
+                      <p className="text-gray-400 text-xs line-through">{CURRENCY}{item.price.toFixed(2)}</p>
                     </div>
                   ) : (
-                    <p className="text-rose-600 font-medium mt-1">${item.price.toFixed(2)}</p>
+                    <p className="text-rose-600 font-medium mt-1">{CURRENCY}{item.price.toFixed(2)}</p>
                   )}
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex items-center border border-gray-200 rounded-full">
@@ -155,7 +183,7 @@ export default function Cart() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">${(getPrice(item) * item.quantity).toFixed(2)}</p>
+                  <p className="font-medium">{CURRENCY}{(getPrice(item) * item.quantity).toFixed(2)}</p>
                 </div>
               </div>
             ))}
@@ -166,16 +194,16 @@ export default function Cart() {
               <div className="space-y-2 text-sm text-gray-500">
                 <div className="flex justify-between">
                   <span>Subtotal ({items.length} items)</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{CURRENCY}{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span className="text-green-600">Free</span>
+                  <span className="text-amber-600 font-medium">{CURRENCY}{shippingFee}.00</span>
                 </div>
               </div>
               <div className="border-t border-gray-100 mt-4 pt-4 flex justify-between font-medium text-lg">
                 <span>Total</span>
-                <span className="text-rose-600">${total.toFixed(2)}</span>
+                <span className="text-rose-600">{CURRENCY}{total.toFixed(2)}</span>
               </div>
               <button onClick={() => setCheckout(true)} className="btn-primary w-full mt-6">
                 Proceed to Checkout

@@ -132,8 +132,8 @@ body {
 }
 
 @keyframes imageGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(234, 88, 12, 0.15); }
-  50% { box-shadow: 0 0 40px rgba(234, 88, 12, 0.3); }
+  0%, 100% { box-shadow: 0 0 20px rgba(219, 39, 119, 0.15); }
+  50% { box-shadow: 0 0 40px rgba(219, 39, 119, 0.3); }
 }
 
 .animate-float { animation: float 3s ease-in-out infinite; }

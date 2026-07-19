@@ -36,6 +36,7 @@ db.exec(`
     image TEXT,
     stock_status INTEGER DEFAULT 1,
     colors TEXT DEFAULT '',
+    brand TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id)
   );
@@ -62,6 +63,8 @@ db.exec(`
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     total REAL NOT NULL,
+    shipping_fee REAL DEFAULT 0,
+    advance_payment REAL DEFAULT 0,
     status TEXT DEFAULT 'pending',
     buyer_name TEXT DEFAULT '',
     mobile TEXT DEFAULT '',
@@ -93,6 +96,13 @@ db.exec(`
     facebook TEXT,
     whatsapp TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
+  INSERT OR IGNORE INTO settings (key, value) VALUES ('shipping_fee', '120');
 `);
 
 // Add new columns for existing databases
@@ -106,6 +116,9 @@ try { db.exec('ALTER TABLE order_items ADD COLUMN color TEXT DEFAULT ""'); } cat
 try { db.exec('ALTER TABLE orders ADD COLUMN buyer_name TEXT DEFAULT ""'); } catch (e) {}
 try { db.exec('ALTER TABLE orders ADD COLUMN mobile TEXT DEFAULT ""'); } catch (e) {}
 try { db.exec('ALTER TABLE products ADD COLUMN images TEXT DEFAULT ""'); } catch (e) {}
+try { db.exec("ALTER TABLE products ADD COLUMN brand TEXT DEFAULT ''"); } catch (e) {}
+try { db.exec("ALTER TABLE orders ADD COLUMN shipping_fee REAL DEFAULT 0"); } catch (e) {}
+try { db.exec("ALTER TABLE orders ADD COLUMN advance_payment REAL DEFAULT 0"); } catch (e) {}
 
 const row = db.prepare('SELECT id FROM contact_info WHERE id = 1').get();
 if (!row) {

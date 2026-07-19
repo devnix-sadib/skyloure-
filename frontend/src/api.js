@@ -69,6 +69,10 @@ export const api = {
     return res.json();
   },
 
+  // Settings
+  getSettings: () => request('/settings'),
+  updateSetting: (key, value) => request(`/settings/${key}`, { method: 'PUT', body: JSON.stringify({ value }) }),
+
   // Admin
   checkAdmin: () => request('/admin/check'),
 };

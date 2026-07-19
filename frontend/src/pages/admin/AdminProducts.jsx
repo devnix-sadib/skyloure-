@@ -8,7 +8,7 @@ export default function AdminProducts() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState({ category_id: '', name: '', description: '', price: '', offer_price: '', image: '', stock_status: 1, colors: '' });
+  const [form, setForm] = useState({ category_id: '', name: '', description: '', price: '', offer_price: '', image: '', stock_status: 1, colors: '', brand: '' });
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
@@ -17,7 +17,7 @@ export default function AdminProducts() {
   useEffect(() => { load(); }, []);
 
   const resetForm = () => {
-    setForm({ category_id: categories[0]?.id || '', name: '', description: '', price: '', offer_price: '', image: '', stock_status: 1, colors: '' });
+    setForm({ category_id: categories[0]?.id || '', name: '', description: '', price: '', offer_price: '', image: '', stock_status: 1, colors: '', brand: '' });
     setImageFiles([]);
     setImagePreviews([]);
     setExistingImages([]);
@@ -56,6 +56,7 @@ export default function AdminProducts() {
         offer_price: form.offer_price ? parseFloat(form.offer_price) : null,
         stock_status: form.stock_status,
         colors: form.colors || '',
+        brand: form.brand || '',
         image: allImages[0] || form.image || null,
         images: allImages,
       };
@@ -84,6 +85,7 @@ export default function AdminProducts() {
       offer_price: p.offer_price ? String(p.offer_price) : '',
       stock_status: p.stock_status,
       colors: p.colors || '',
+      brand: p.brand || '',
       image: p.image || '',
     });
     setExistingImages(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : []));
@@ -177,10 +179,14 @@ export default function AdminProducts() {
             </label>
             <input className="input-field" value={form.colors} onChange={e => setForm({ ...form, colors: e.target.value })} placeholder="Black,Brown,Navy,Red" />
           </div>
-          <div className="sm:col-span-2">
-            <label className="block text-sm text-gray-600 mb-1.5 font-medium">Description</label>
-            <textarea className="input-field" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-          </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1.5 font-medium">Brand</label>
+              <input className="input-field" value={form.brand} onChange={e => setForm({ ...form, brand: e.target.value })} placeholder="e.g. Gucci, Prada, Nike" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm text-gray-600 mb-1.5 font-medium">Description</label>
+              <textarea className="input-field" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+            </div>
           <div className="sm:col-span-2">
             <label className="block text-sm text-gray-600 mb-1.5 font-medium">Product Images</label>
             <div className="flex flex-wrap gap-3 mb-3">
@@ -282,11 +288,11 @@ export default function AdminProducts() {
                 <div className="flex items-center gap-2 mt-1.5">
                   {hasOffer ? (
                     <>
-                      <p className="text-rose-600 font-medium">${p.offer_price.toFixed(2)}</p>
-                      <p className="text-gray-400 text-xs line-through">${p.price.toFixed(2)}</p>
+                      <p className="text-rose-600 font-medium">৳{p.offer_price.toFixed(2)}</p>
+                      <p className="text-gray-400 text-xs line-through">৳{p.price.toFixed(2)}</p>
                     </>
                   ) : (
-                    <p className="text-rose-600 font-medium">${p.price.toFixed(2)}</p>
+                    <p className="text-rose-600 font-medium">৳{p.price.toFixed(2)}</p>
                   )}
                 </div>
                 {p.colors && (

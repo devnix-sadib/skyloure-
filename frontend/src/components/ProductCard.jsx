@@ -60,7 +60,7 @@ export default function ProductCard({ product }) {
   return (
     <div className="card group">
       <div className="relative overflow-hidden bg-gray-900">
-        <Link to={`/products`} className="block">
+        <Link to={`/product/${product.id}`} className="block">
           <div className="aspect-[4/5] bg-gray-100 overflow-hidden relative">
             {images.length > 0 ? (
               <>
@@ -114,17 +114,17 @@ export default function ProductCard({ product }) {
         )}
       </div>
       <div className="p-4">
-        <Link to={`/products`}>
+        <Link to={`/product/${product.id}`}>
           <h3 className="font-serif font-medium text-sm truncate text-gray-900">{product.name}</h3>
           <p className="text-gray-500 text-xs mt-0.5 line-clamp-1">{product.description}</p>
           <div className="flex items-center gap-2 mt-2">
             {hasOffer ? (
               <>
-                <p className="text-rose-600 font-bold">${product.offer_price.toFixed(2)}</p>
-                <p className="text-gray-400 text-xs line-through">${product.price.toFixed(2)}</p>
+                <p className="text-rose-600 font-bold">৳{product.offer_price.toFixed(2)}</p>
+                <p className="text-gray-400 text-xs line-through">৳{product.price.toFixed(2)}</p>
               </>
             ) : (
-              <p className="text-rose-600 font-bold">${product.price.toFixed(2)}</p>
+              <p className="text-rose-600 font-bold">৳{product.price.toFixed(2)}</p>
             )}
           </div>
         </Link>

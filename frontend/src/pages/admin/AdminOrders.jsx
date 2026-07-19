@@ -76,7 +76,7 @@ export default function AdminOrders() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <p className="text-rose-600 font-medium">${order.total.toFixed(2)}</p>
+                <p className="text-rose-600 font-medium">৳{order.total.toFixed(2)}</p>
                 <div className="flex items-center gap-2">
                   <button onClick={() => viewOrder(order.id)} className="btn-outline text-xs !py-1.5 !px-4">Details</button>
                   {order.status !== 'completed' && (
@@ -140,12 +140,12 @@ export default function AdminOrders() {
                       )}
                       <p className="text-xs text-gray-400">×{item.quantity}</p>
                     </div>
-                    <span className="font-medium text-sm flex-shrink-0">${(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="font-medium text-sm flex-shrink-0">৳{(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between font-medium px-4 py-2.5 bg-gray-50 rounded-b-xl">
                   <span>Total</span>
-                  <span className="text-rose-600">${details.total.toFixed(2)}</span>
+                  <span className="text-rose-600">৳{details.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>

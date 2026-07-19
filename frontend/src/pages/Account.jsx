@@ -17,9 +17,13 @@ export default function Account() {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
+  const [defaultShipping, setDefaultShipping] = useState(120);
 
   useEffect(() => {
-    if (user) api.getOrders().then(setOrders).catch(() => {});
+    if (user) {
+      api.getOrders().then(setOrders).catch(() => {});
+      api.getSettings().then(s => { if (s.shipping_fee) setDefaultShipping(parseFloat(s.shipping_fee)); }).catch(() => {});
+    }
   }, [user]);
 
   const viewOrder = async (id) => {
@@ -62,25 +66,39 @@ export default function Account() {
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.map(order => (
-              <div key={order.id} className="border border-gray-100 rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-xs text-gray-400">ORDER #{order.id.slice(0, 8)}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{new Date(order.created_at).toLocaleDateString()}</p>
+            {orders.map(order => {
+              const sf = order.shipping_fee > 0 ? order.shipping_fee : defaultShipping;
+              const bag = order.shipping_fee > 0 ? order.total - order.shipping_fee : order.total;
+              const orderTotal = bag + sf;
+              return (
+                <div key={order.id} className="border border-gray-100 rounded-2xl p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-xs text-gray-400">ORDER #{order.id.slice(0, 8)}</p>
+                      <p className="text-sm text-gray-500 mt-0.5">{new Date(order.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
+                      {order.status}
+                    </span>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
-                    {order.status}
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="text-gray-500">Bag:</span>
+                        <span>৳{bag.toFixed(2)}</span>
+                        <span className="text-gray-300">+</span>
+                        <span className="text-gray-500">Delivery:</span>
+                        <span>৳{sf.toFixed(2)}</span>
+                      </div>
+                      <p className="text-lg font-bold text-rose-600 mt-1">Total: ৳{orderTotal.toFixed(2)}</p>
+                    </div>
+                    <button onClick={() => viewOrder(order.id)} className="text-sm text-rose-600 hover:text-rose-700">
+                      View Details
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-rose-600 font-medium">${order.total.toFixed(2)}</p>
-                  <button onClick={() => viewOrder(order.id)} className="text-sm text-rose-600 hover:text-rose-700">
-                    View Details
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -116,14 +134,24 @@ export default function Account() {
                     {item.color && <p className="text-[11px] text-gray-400 flex items-center gap-1.5"><span className="w-3 h-3 rounded-full border border-gray-200 inline-block" style={{ backgroundColor: getColorHex(item.color) }} />{item.color}</p>}
                     <p className="text-xs text-gray-400">×{item.quantity}</p>
                   </div>
-                  <span className="font-medium flex-shrink-0">${(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-medium flex-shrink-0">৳{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
-            <div className="border-t border-gray-100 pt-3">
-              <div className="flex justify-between font-medium">
-                <span>Total</span>
-                <span className="text-rose-600">${orderDetails.total.toFixed(2)}</span>
+            <div className="border-t border-gray-100 pt-3 space-y-1">
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Bag Price</span>
+                <span>৳{(orderDetails.shipping_fee > 0 ? orderDetails.total - orderDetails.shipping_fee : orderDetails.total).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Delivery Fee</span>
+                <span>৳{(orderDetails.shipping_fee > 0 ? orderDetails.shipping_fee : defaultShipping).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center pt-1 border-t border-gray-100">
+                <span className="font-medium text-gray-700">Total</span>
+                <span className="text-xl font-bold text-rose-600">
+                  ৳{((orderDetails.shipping_fee > 0 ? orderDetails.total - orderDetails.shipping_fee : orderDetails.total) + (orderDetails.shipping_fee > 0 ? orderDetails.shipping_fee : defaultShipping)).toFixed(2)}
+                </span>
               </div>
             </div>
             <div className="mt-4 text-sm text-gray-500">
